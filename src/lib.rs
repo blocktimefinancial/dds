@@ -68,10 +68,7 @@ impl Dds {
         if now > exdate {
             panic!("ExDate is in the past");
         }
-
-        // Make sure the token exists, I guess this should panic if it doesn't exist
-        let client = token::Client::new(&e, &token);
-       
+ 
         // Transfer the tokens to the contract
         transfer_from_account_to_contract(&e, &token, &e.invoker().into(), &amount);
 
