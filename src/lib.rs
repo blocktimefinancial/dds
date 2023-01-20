@@ -1,6 +1,9 @@
 #![no_std]
 
-use soroban_sdk::{contracterror, contracttype, contractimpl, symbol, vec, Env, Symbol, Vec, Map, Address, AccountId, BytesN};
+use soroban_sdk::{
+    contracterror, contractimpl, contracttype, symbol, vec, AccountId, Address, BytesN, Env, Map,
+    Symbol, Vec,
+};
 
 mod token {
     soroban_sdk::contractimport!(file = "../soroban-examples/soroban_token_spec.wasm");
@@ -28,7 +31,7 @@ enum DdsError {
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 enum DdsDataKys {
     Init,
-    Divdata
+    Divdata,
 }
 
 #[contracttype]
@@ -43,40 +46,48 @@ pub struct Divdata {
 #[contractimpl]
 impl Dds {
     pub fn deposit(e: Env, token: BytesN<32>, amount: i128, holders: Vec<Holder>, exdate: u64) {
+        // Check to see if the contract has been initialized
         if is_initialized(&e) {
             panic!("Already initialized");
         }
-        
+        // Only allow 10 holders at this point
         if holders.len() > 10 {
             panic!("Too many holders");
         }
+        // Make sure we have at least one holder
         if holders.len() == 0 {
             panic!("No holders");
         }
+        // Make sure the amount is positive
         if amount <= 0 {
             panic!("Negative or zero amount");
         }
-
+        // Make sure the exdate is in the future
+        // TODO: This should probably be at least 1 day in the future?
         let now: u64 = e.ledger().timestamp();
         if now > exdate {
             panic!("ExDate is in the past");
         }
 
+        // Make sure the token exists, I guess this should panic if it doesn't exist
+        let client = token::Client::new(&e, &token);
+       
+        // Transfer the tokens to the contract
         transfer_from_account_to_contract(&e, &token, &e.invoker().into(), &amount);
 
-        e.storage().set(&(DdsDataKys::Divdata), 
+        e.storage().set(
+            &(DdsDataKys::Divdata),
             &Divdata {
                 token: token,
                 div: amount,
                 exdate: exdate,
                 holders: holders,
-            }
+            },
         );
         e.storage().set(&(DdsDataKys::Init), &());
     }
 
-
-     pub fn withdraw(e: Env, token: BytesN<32>, amount: i128) {        
+    pub fn withdraw(e: Env, token: BytesN<32>, amount: i128) {
         let divdata: Divdata = e.storage().get(&(DdsDataKys::Divdata)).unwrap().unwrap();
         let now: u64 = e.ledger().timestamp();
         if now < divdata.exdate {
