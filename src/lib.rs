@@ -1,7 +1,7 @@
 #![no_std]
 
 use soroban_sdk::{
-    contracterror, contractimpl, contracttype, symbol, vec, AccountId, Address, BytesN, Env, Map,
+    contracterror, contractimpl, contracttype, symbol, vec, log, AccountId, Address, BytesN, Env, Map,
     Symbol, Vec,
 };
 
@@ -46,6 +46,8 @@ pub struct Divdata {
 #[contractimpl]
 impl Dds {
     pub fn deposit(e: Env, token: BytesN<32>, amount: i128, holders: Vec<Holder>, exdate: u64) {
+        log!(&e, "deposit {} {} {} {}", &token, &amount, &holders, &exdate);
+        
         // Check to see if the contract has been initialized
         if is_initialized(&e) {
             panic!("Already initialized");
@@ -85,6 +87,8 @@ impl Dds {
     }
 
     pub fn withdraw(e: Env, token: BytesN<32>, amount: i128) {
+        log!(&e, "withdraw {} {}", &token, &amount);
+        
         let divdata: Divdata = e.storage().get(&(DdsDataKys::Divdata)).unwrap().unwrap();
         let now: u64 = e.ledger().timestamp();
         if now < divdata.exdate {
