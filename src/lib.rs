@@ -1,8 +1,8 @@
 #![no_std]
 
 use soroban_sdk::{
-    contracterror, contractimpl, contracttype, symbol, vec, log, AccountId, Address, BytesN, Env, Map,
-    Symbol, Vec,
+    contracterror, contractimpl, contracttype, log, symbol, vec, AccountId, Address, BytesN, Env,
+    Map, Symbol, Vec,
 };
 
 mod token {
@@ -46,8 +46,15 @@ pub struct Divdata {
 #[contractimpl]
 impl Dds {
     pub fn deposit(e: Env, token: BytesN<32>, amount: i128, holders: Vec<Holder>, exdate: u64) {
-        log!(&e, "deposit {} {} {} {}", &token, &amount, &holders, &exdate);
-        
+        log!(
+            &e,
+            "deposit {} {} {} {}",
+            &token,
+            &amount,
+            &holders,
+            &exdate
+        );
+
         // Check to see if the contract has been initialized
         if is_initialized(&e) {
             panic!("Already initialized");
@@ -70,7 +77,7 @@ impl Dds {
         if now > exdate {
             panic!("ExDate is in the past");
         }
- 
+
         // Transfer the tokens to the contract
         transfer_from_account_to_contract(&e, &token, &e.invoker().into(), &amount);
 
@@ -88,7 +95,7 @@ impl Dds {
 
     pub fn withdraw(e: Env, token: BytesN<32>, amount: i128) {
         log!(&e, "withdraw {} {}", &token, &amount);
-        
+
         let divdata: Divdata = e.storage().get(&(DdsDataKys::Divdata)).unwrap().unwrap();
         let now: u64 = e.ledger().timestamp();
         if now < divdata.exdate {
@@ -119,4 +126,35 @@ fn transfer_from_account_to_contract(
 ) {
     let client = token::Client::new(e, token_id);
     client.xfer_from(&Signature::Invoker, &0, from, &get_contract_id(e), amount);
+}
+
+#[cfg(test)]
+extern crate std;
+mod tests {
+    use soroban_sdk::{testutils::Accounts};
+
+    #[test]
+    
+
+    fn test() {
+        let e = soroban_sdk::Env::default();
+        let contract_id = e.register_contract(None, super::Dds);
+        let client = super::DdsClient::new(&e, &contract_id);
+
+        let token: soroban_sdk::BytesN<32> =
+            e.register_stellar_asset_contract(soroban_sdk::xdr::Asset::Native);
+        let amount = 100;
+        let user1 = e.accounts().generate();
+        let user1_id = soroban_auth::Identifier::Account(user1.clone());
+
+        let h: super::Holder = super::Holder {
+            addr: user1_id,
+            amount: 10,
+        };
+
+        let holders = soroban_sdk::vec![&e, h];
+        let exdate = 1000;
+
+        let result = client.deposit(&token, &amount, &holders, &exdate);
+    }
 }
