@@ -108,6 +108,26 @@ impl Dds {
             panic!("Insufficient funds");
         }
     }
+
+    pub fn holders(e: Env) -> Vec<Holder> {
+        let divdata: Divdata = e.storage().get(&(DdsDataKys::Divdata)).unwrap().unwrap();
+        divdata.holders
+    }
+
+    pub fn exdate(e: Env) -> u64 {
+        let divdata: Divdata = e.storage().get(&(DdsDataKys::Divdata)).unwrap().unwrap();
+        divdata.exdate
+    }
+
+    pub fn div(e: Env) -> i128 {
+        let divdata: Divdata = e.storage().get(&(DdsDataKys::Divdata)).unwrap().unwrap();
+        divdata.div
+    }
+
+    pub fn token(e: Env) -> BytesN<32> {
+        let divdata: Divdata = e.storage().get(&(DdsDataKys::Divdata)).unwrap().unwrap();
+        divdata.token
+    }
 }
 
 fn is_initialized(env: &Env) -> bool {
