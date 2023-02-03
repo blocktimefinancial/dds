@@ -128,6 +128,8 @@ impl Dds {
         let divdata: Divdata = e.storage().get(&(DdsDataKys::Divdata)).unwrap().unwrap();
         divdata.token
     }
+    // TODO: Add a function to allow the contract owner to change the holders
+    
 }
 
 fn is_initialized(env: &Env) -> bool {
